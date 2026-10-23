@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getOrders, paymentMethodLabels, type StoredOrder } from "@/lib/orders"
 import { formatINR } from "@/lib/india"
-import { Package, ArrowRight, Truck, MapPin, CreditCard, ShoppingBag } from "lucide-react"
+import { Package, ArrowRight, Truck, MapPin, CreditCard, ShoppingBag, FileSpreadsheet } from "lucide-react"
+import { DcrSubsidyPackDialog } from "@/components/orders/dcr-subsidy-pack-dialog"
 
 const sampleOrders = [
   {
@@ -139,11 +140,25 @@ export default function DashboardOrdersPage() {
                           {formatINR(order.total)}
                         </p>
                       </div>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/order-confirmation?id=${encodeURIComponent(order.id)}`}>
-                          View order <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <DcrSubsidyPackDialog
+                          orderId={order.id}
+                          kitName={order.items[0]?.name ?? "Standard Rooftop Solar Kit"}
+                          date={new Date(order.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                          total={order.total}
+                          state={order.address.state}
+                          customerName={order.address.fullName}
+                        />
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href={`/order-confirmation?id=${encodeURIComponent(order.id)}`}>
+                            View order <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -184,9 +199,18 @@ export default function DashboardOrdersPage() {
                     </p>
                   </div>
                 </div>
-                <p className="text-base font-semibold text-apple-gray-900 dark:text-white">
-                  {formatINR(order.total)}
-                </p>
+                <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+                  <p className="text-base font-semibold text-apple-gray-900 dark:text-white">
+                    {formatINR(order.total)}
+                  </p>
+                  <DcrSubsidyPackDialog
+                    orderId={order.id}
+                    kitName={order.items[0]}
+                    date={order.date}
+                    total={order.total}
+                    state={order.city.split(", ")[1] ?? "Maharashtra"}
+                  />
+                </div>
               </div>
             ))}
           </CardContent>

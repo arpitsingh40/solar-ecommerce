@@ -18,7 +18,9 @@ import {
   MapPin,
   CreditCard,
   Phone,
+  ShieldCheck,
 } from "lucide-react"
+import { DcrSubsidyPackDialog } from "@/components/orders/dcr-subsidy-pack-dialog"
 
 export default function OrderConfirmationPage() {
   return (
@@ -235,6 +237,41 @@ function Confirmation() {
             </div>
           </CardContent>
         </Card>
+
+        {/* DCR Subsidy Pack Generator Callout */}
+        <div className="mt-5 rounded-2xl border border-apple-green-200 bg-apple-green-50/70 p-5 dark:border-apple-green-900/40 dark:bg-apple-green-950/20">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge variant="success" className="gap-1">
+                  <ShieldCheck className="h-3 w-3" /> PM Surya Ghar
+                </Badge>
+                <span className="text-xs font-semibold uppercase tracking-wider text-apple-green-800 dark:text-apple-green-300">
+                  DCR Subsidy Pack Ready
+                </span>
+              </div>
+              <p className="text-sm font-medium text-apple-gray-900 dark:text-white">
+                Download ALMM DCR serial certificates, BIS declarations &amp; DISCOM SLD.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Auto-assigned from Lucknow Logistics Hub for National Portal and UPNEDA submission.
+              </p>
+            </div>
+            <DcrSubsidyPackDialog
+              orderId={order.id}
+              kitName={order.items[0]?.name ?? "Standard Rooftop Solar Kit"}
+              date={orderDate}
+              total={order.total}
+              state={order.address.state}
+              customerName={order.address.fullName}
+              trigger={
+                <Button className="shrink-0 gap-1.5 bg-apple-green-600 text-white hover:bg-apple-green-700">
+                  <ShieldCheck className="h-4 w-4" /> Download 1-Click Subsidy Pack
+                </Button>
+              }
+            />
+          </div>
+        </div>
 
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild>

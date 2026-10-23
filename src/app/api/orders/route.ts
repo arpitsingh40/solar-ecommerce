@@ -4,6 +4,7 @@ import { products } from "@/lib/data/catalog"
 import { updateJsonArray } from "@/lib/server/json-store"
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session"
 import { checkRateLimit, rateLimitResponse } from "@/lib/server/rate-limit"
+import { validateCoupon } from "@/lib/commerce"
 import {
   createOrderId,
   type OrderAddress,
@@ -105,8 +106,9 @@ export async function POST(request: Request) {
     })
   }
 
-  const validCoupon = payload.coupon?.trim().toUpperCase() === "SOLAR2026" ? "SOLAR2026" : null
-  const couponDiscount = validCoupon ? Math.round(subtotal * 0.05) : 0
+  const couponResult = validateCoupon(payload.coupon, subtotal)
+  const validCoupon = couponResult ? couponResult.code : null
+  const couponDiscount = couponResult ? couponResult.discount : 0
   const productDiscount = 0
   const shipping = 0 // Freight included on all dealer kits
   const total = Math.max(0, subtotal - couponDiscount)
@@ -158,7 +160,7 @@ export async function POST(request: Request) {
     total,
     gstIncluded,
     address: cleanAddress,
-    deliveryEstimate: deliveryEstimate(cleanAddress.pincode),
+    deliveryEstimate: deliveryEstimate(cleanAddress.state),
     userId,
   }
 

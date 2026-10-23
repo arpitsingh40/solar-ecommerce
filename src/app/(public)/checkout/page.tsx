@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
-import { calculateCartTotals } from "@/lib/commerce"
+import { calculateCartTotals, validateCoupon } from "@/lib/commerce"
 import {
   INDIA,
   INDIAN_STATES_AND_UTS,
@@ -115,7 +115,6 @@ export default function CheckoutPage() {
   const items = useCart((state) => state.items)
   const coupon = useCart((state) => state.coupon)
   const clearCart = useCart((state) => state.clearCart)
-  const validCoupon = coupon?.toUpperCase() === "DEALER5K" ? coupon : null
   const { user } = useAuth()
   const [mounted, setMounted] = React.useState(false)
   const [form, setForm] = React.useState<CheckoutForm>(emptyForm)
@@ -141,7 +140,8 @@ export default function CheckoutPage() {
     }
   }, [mounted, items.length, isPlacing, router])
 
-  const totals = calculateCartTotals(items, validCoupon)
+  const totals = calculateCartTotals(items, coupon)
+  const validCoupon = validateCoupon(coupon, totals.subtotal)?.code ?? null
   const total = totals.total
   const gst = gstIncluded(totals.total - totals.shipping)
   const estimatedDelivery = form.state ? deliveryEstimate(form.state) : INDIA.deliveryWindow
@@ -243,9 +243,9 @@ export default function CheckoutPage() {
       clearCart()
       router.push(`/order-confirmation?id=${encodeURIComponent(confirmedOrder.id)}`)
     } catch {
-      saveOrder(order)
-      clearCart()
-      router.push(`/order-confirmation?id=${encodeURIComponent(order.id)}`)
+      setError("Network error: Unable to reach the order server. Please check your connection and try again.")
+      setIsPlacing(false)
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 

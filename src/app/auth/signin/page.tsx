@@ -10,27 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-
-function safeCallbackUrl(raw: string | null): string | null {
-  if (!raw) return null
-  // Prevent protocol-relative URLs (//) and backslash redirects (/\)
-  if (
-    raw.startsWith("/") &&
-    !raw.startsWith("//") &&
-    !raw.startsWith("/\\") &&
-    !raw.startsWith("/auth")
-  ) {
-    try {
-      const parsed = new URL(raw, "http://localhost")
-      if (parsed.origin === "http://localhost" && parsed.pathname.startsWith("/")) {
-        return `${parsed.pathname}${parsed.search}${parsed.hash}`
-      }
-    } catch {
-      return null
-    }
-  }
-  return null
-}
+import { safeCallbackUrl } from "@/lib/auth/redirect"
 
 function dashboardForRole(role: string): string {
   if (role === "admin") return "/admin/dashboard"

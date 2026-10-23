@@ -47,7 +47,7 @@ const seedAddresses: SavedAddress[] = [
     line2: "",
     city: "Lucknow",
     state: "Uttar Pradesh",
-    pincode: "560001",
+    pincode: "226010",
     isDefault: false,
   },
 ]

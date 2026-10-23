@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useCart } from "@/hooks/use-cart"
-import { GST_LABEL, calculateCartTotals } from "@/lib/commerce"
+import { GST_LABEL, calculateCartTotals, validateCoupon } from "@/lib/commerce"
 import { INDIA, formatINR, gstIncluded } from "@/lib/india"
 import {
   ArrowRight,
@@ -31,30 +31,30 @@ export default function CartPage() {
   const removeItem = useCart((state) => state.removeItem)
   const clearCart = useCart((state) => state.clearCart)
   const setCoupon = useCart((state) => state.setCoupon)
-  const validCoupon = coupon?.toUpperCase() === "DEALER5K" ? coupon : null
   const [couponInput, setCouponInput] = React.useState("")
   const [couponError, setCouponError] = React.useState("")
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => setMounted(true), [])
 
-  const totals = calculateCartTotals(items, validCoupon)
+  const totals = calculateCartTotals(items, coupon)
   const gst = gstIncluded(totals.total)
 
   const applyCoupon = (event: React.FormEvent) => {
     event.preventDefault()
     const code = couponInput.trim().toUpperCase()
-    if (code === "DEALER5K") {
-      if (totals.subtotal < 1_00_000) {
-        setCouponError("DEALER5K is valid on dealer orders above ₹1,00,000.")
-        return
-      }
-      setCoupon(code)
+    const validated = validateCoupon(code, totals.subtotal)
+    if (validated) {
+      setCoupon(validated.code)
       setCouponError("")
       setCouponInput("")
       return
     }
-    setCouponError("That code is not valid. Try DEALER5K.")
+    if (code === "DEALER5K" && totals.subtotal < 1_00_000) {
+      setCouponError("DEALER5K is valid on dealer orders above ₹1,00,000.")
+      return
+    }
+    setCouponError("That code is not valid. Try DEALER5K or SOLAR2026.")
   }
 
   if (!mounted) {
@@ -266,10 +266,10 @@ export default function CartPage() {
                 <label htmlFor="coupon" className="flex items-center gap-2 text-sm font-medium">
                   <Tag className="h-4 w-4" /> Dealer credit code
                 </label>
-                {validCoupon ? (
+                {coupon ? (
                   <div className="flex items-center justify-between rounded-lg bg-apple-green-50 px-3 py-2 text-sm dark:bg-apple-green-900/20">
                     <span className="font-medium text-apple-green-800 dark:text-apple-green-300">
-                      Dealer credit {validCoupon} applied
+                      Dealer credit {coupon} applied
                     </span>
                     <button
                       type="button"
@@ -297,7 +297,7 @@ export default function CartPage() {
                   </div>
                 )}
                 {couponError && <p className="text-xs text-apple-red-600">{couponError}</p>}
-                {!validCoupon && (
+                {!coupon && (
                   <p className="text-xs text-muted-foreground">
                     Launch credit: ₹5,000 off dealer orders above ₹1,00,000 with{" "}
                     <span className="font-medium">DEALER5K</span>.

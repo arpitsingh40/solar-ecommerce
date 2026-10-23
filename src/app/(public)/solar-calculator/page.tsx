@@ -26,6 +26,8 @@ import {
   Building2,
   Calculator,
   CheckCircle,
+  Eye,
+  EyeOff,
   Home,
   IndianRupee,
   Info,
@@ -79,6 +81,7 @@ export default function SolarCalculatorPage() {
   const [batteryBackup, setBatteryBackup] = React.useState(false)
   const [error, setError] = React.useState("")
   const [added, setAdded] = React.useState(false)
+  const [presentationMode, setPresentationMode] = React.useState(false)
 
   const bill = Math.max(0, Number(monthlyBill) || 0)
   const unitRate = Math.max(0.1, Number(tariff) || getStateTariff(state))
@@ -101,19 +104,6 @@ export default function SolarCalculatorPage() {
   const panelCount = Math.ceil((systemKw * 1000) / 545)
   const roofNeeded = Math.ceil(systemKw * 100)
 
-  const costPerKw = 58_000 + (batteryBackup ? 22_000 : 0)
-  const systemCost = Math.round(systemKw * costPerKw)
-  const subsidy = calculateSubsidyForState(state, systemKw)
-  const netCost = Math.max(0, systemCost - subsidy)
-  const dealerPrice = Math.round(systemCost * 0.65)
-  const dealerMargin = Math.max(0, systemCost - dealerPrice)
-  const annualGeneration = Math.round(systemKw * yieldPerKw)
-  const annualSavings = Math.round(Math.min(annualGeneration, annualUnits) * unitRate)
-  const monthlySavings = Math.round(annualSavings / 12)
-  const paybackYears = annualSavings > 0 ? netCost / annualSavings : 0
-  const co2Tonnes = (annualGeneration * 0.00071).toFixed(1)
-  const lifetimeSavings = Math.max(0, annualSavings * 25 - netCost)
-
   const recommendedKit = React.useMemo(() => {
     if (batteryBackup) {
       if (systemKw >= 5) return productBySlug.get("5kw-hybrid-solar-kit")
@@ -128,6 +118,24 @@ export default function SolarCalculatorPage() {
     if (systemKw >= 2) return productBySlug.get("2kw-on-grid-solar-kit")
     return productBySlug.get("1kw-on-grid-solar-kit")
   }, [batteryBackup, systemKw])
+
+  const defaultCostPerKw = 58_000 + (batteryBackup ? 22_000 : 0)
+  const systemCost = recommendedKit
+    ? recommendedKit.basePrice
+    : Math.round(systemKw * defaultCostPerKw)
+  const costPerKw = Math.round(systemCost / systemKw)
+  const dealerPrice = recommendedKit
+    ? (recommendedKit.salePrice ?? recommendedKit.basePrice)
+    : Math.round(systemCost * 0.65)
+  const dealerMargin = Math.max(0, systemCost - dealerPrice)
+  const subsidy = calculateSubsidyForState(state, systemKw)
+  const netCost = Math.max(0, systemCost - subsidy)
+  const annualGeneration = Math.round(systemKw * yieldPerKw)
+  const annualSavings = Math.round(Math.min(annualGeneration, annualUnits) * unitRate)
+  const monthlySavings = Math.round(annualSavings / 12)
+  const paybackYears = annualSavings > 0 ? netCost / annualSavings : 0
+  const co2Tonnes = (annualGeneration * 0.00071).toFixed(1)
+  const lifetimeSavings = Math.max(0, annualSavings * 25 - netCost)
 
   const recommendedItems = recommendedKit ? [recommendedKit] : []
 
@@ -510,6 +518,47 @@ export default function SolarCalculatorPage() {
 
         {step === 3 && (
           <div className="space-y-5">
+            {/* Living-Room Client Presentation Toggle */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-apple-blue-200 bg-apple-blue-50/60 p-4 dark:border-apple-blue-900/60 dark:bg-apple-blue-950/20">
+              <div className="flex items-center gap-2.5">
+                {presentationMode ? (
+                  <EyeOff className="h-5 w-5 text-apple-blue-600" />
+                ) : (
+                  <Eye className="h-5 w-5 text-apple-blue-600" />
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-apple-gray-900 dark:text-white">
+                    Living-Room Presentation Mode
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {presentationMode
+                      ? "Dealer margin and wholesale kit cost are hidden. Safe for homeowner screen sharing."
+                      : "Displaying your 35% dealer margin and 65% kit invoice."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={presentationMode ? "default" : "outline"}
+                  onClick={() => setPresentationMode(!presentationMode)}
+                  className="text-xs"
+                >
+                  {presentationMode ? "Show Dealer Margin" : "Hide Margin (Client View)"}
+                </Button>
+                {presentationMode && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.print()}
+                    className="text-xs"
+                  >
+                    <Printer className="mr-1.5 h-3.5 w-3.5" /> Print Proposal
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <Card className="overflow-hidden">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -591,38 +640,74 @@ export default function SolarCalculatorPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl bg-apple-gray-900 p-5 text-white">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wider text-white/60">
-                        Your dealer numbers
-                      </p>
-                      <p className="mt-1 text-sm text-white/80">
-                        Kit price is 65% of the homeowner turnkey quote.
-                      </p>
+                {!presentationMode ? (
+                  <div className="mt-4 rounded-xl bg-apple-gray-900 p-5 text-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-white/60">
+                          Your dealer numbers
+                        </p>
+                        <p className="mt-1 text-sm text-white/80">
+                          Kit price is 65% of the homeowner turnkey quote.
+                        </p>
+                      </div>
+                      <Badge className="border-white/20 bg-white/10 text-white">
+                        35% margin
+                      </Badge>
                     </div>
-                    <Badge className="border-white/20 bg-white/10 text-white">
-                      35% margin
-                    </Badge>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs text-white/60">Dealer kit price</p>
+                        <p className="mt-1 text-2xl font-semibold">{formatINR(dealerPrice)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/60">Dealer margin</p>
+                        <p className="mt-1 text-2xl font-semibold text-apple-green-400">
+                          {formatINR(dealerMargin)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs leading-relaxed text-white/60">
+                      Your invoice is the 65% kit price plus GST. The subsidy is paid to the homeowner,
+                      not deducted from your kit invoice. The margin covers installation, labour and
+                      profit.
+                    </p>
                   </div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs text-white/60">Dealer kit price</p>
-                      <p className="mt-1 text-2xl font-semibold">{formatINR(dealerPrice)}</p>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-apple-green-200 bg-apple-green-50/70 p-5 dark:border-apple-green-900 dark:bg-apple-green-950/20">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-apple-green-800 dark:text-apple-green-300">
+                          Turnkey Installation &amp; Warranties Included
+                        </p>
+                        <p className="mt-1 text-sm text-apple-green-900 dark:text-apple-green-200 font-medium">
+                          All-inclusive quote with tier-1 equipment and complete paperwork.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-apple-green-300 text-apple-green-800 bg-white dark:bg-apple-gray-900">
+                        25-Year Warranty
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="text-xs text-white/60">Dealer margin</p>
-                      <p className="mt-1 text-2xl font-semibold text-apple-green-400">
-                        {formatINR(dealerMargin)}
-                      </p>
-                    </div>
+                    <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 text-xs text-apple-green-900 dark:text-apple-green-200">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-apple-green-600 shrink-0" />
+                        <span>DCR ALMM Mono PERC 545W Panels</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-apple-green-600 shrink-0" />
+                        <span>BIS-Certified Inverter with 5-Yr Warranty</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-apple-green-600 shrink-0" />
+                        <span>Hot-Dip Galvanized GI Mounting Structure</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-apple-green-600 shrink-0" />
+                        <span>DISCOM Net-Metering &amp; PM Surya Ghar Filing</span>
+                      </li>
+                    </ul>
                   </div>
-                  <p className="mt-3 text-xs leading-relaxed text-white/60">
-                    Your invoice is the 65% kit price plus GST. The subsidy is paid to the homeowner,
-                    not deducted from your kit invoice. The margin covers installation, labour and
-                    profit.
-                  </p>
-                </div>
+                )}
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="flex items-start gap-2 rounded-lg bg-apple-gray-50 px-3 py-2.5 text-xs dark:bg-apple-gray-900">

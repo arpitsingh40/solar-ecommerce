@@ -22,14 +22,19 @@ import {
   ArrowRight,
   Battery,
   CheckCircle,
+  Eye,
+  EyeOff,
   Home,
   Landmark,
   Leaf,
   MapPin,
   Phone,
+  Printer,
   Ruler,
+  ShieldCheck,
   Sun,
 } from "lucide-react"
+import { SplitPayEscrowDialog } from "@/components/project-builder/split-pay-escrow-dialog"
 
 const presets = [
   {
@@ -103,6 +108,7 @@ export default function ProjectBuilderPage() {
   const [roofType, setRoofType] = React.useState("flat")
   const [monthlyBill, setMonthlyBill] = React.useState("3000")
   const [added, setAdded] = React.useState(false)
+  const [presentationMode, setPresentationMode] = React.useState(false)
 
   const preset = presets.find((item) => item.id === presetId) ?? presets[0]!
   const product = productBySlug.get(preset.slug)
@@ -338,9 +344,27 @@ export default function ProjectBuilderPage() {
                 </div>
               )}
               <div className="p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-apple-gray-400">
-                  Your dealer quote
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-apple-gray-400">
+                    {presentationMode ? "Homeowner Turnkey Proposal" : "Your dealer quote"}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant={presentationMode ? "default" : "outline"}
+                    onClick={() => setPresentationMode(!presentationMode)}
+                    className="h-7 text-xs"
+                  >
+                    {presentationMode ? (
+                      <>
+                        <Eye className="mr-1 h-3 w-3" /> Dealer Mode
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="mr-1 h-3 w-3" /> Hide Margin (Client View)
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <h2 className="mt-1 text-headline-lg font-semibold text-apple-gray-900 dark:text-white">
                   {product?.name ?? preset.title}
                 </h2>
@@ -348,35 +372,90 @@ export default function ProjectBuilderPage() {
                   {preset.sizeKw} kW · {panelCount} modules · {state}
                 </p>
 
-                <div className="mt-5 space-y-2.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Dealer kit price</span>
-                    <span className="font-semibold">{formatINR(dealerPrice)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Homeowner turnkey</span>
-                    <span>{formatINR(turnkeyPrice)}</span>
-                  </div>
-                  <div className="flex justify-between text-apple-green-700 dark:text-apple-green-400">
-                    <span>Your dealer margin</span>
-                    <span className="font-semibold">{formatINR(dealerMargin)}</span>
-                  </div>
-                  <div className="border-t border-apple-gray-200 pt-2.5 dark:border-apple-gray-800">
-                    {subsidy > 0 && (
-                      <div className="flex justify-between text-apple-green-700 dark:text-apple-green-400">
-                        <span>{state === "Uttar Pradesh" ? "UP combined subsidy" : "PM Surya Ghar subsidy"}</span>
-                        <span>−{formatINR(subsidy)}</span>
+                {!presentationMode ? (
+                  <div className="mt-5 space-y-2.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Dealer kit price</span>
+                      <span className="font-semibold">{formatINR(dealerPrice)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Homeowner turnkey</span>
+                      <span>{formatINR(turnkeyPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-apple-green-700 dark:text-apple-green-400">
+                      <span>Your dealer margin</span>
+                      <span className="font-semibold">{formatINR(dealerMargin)}</span>
+                    </div>
+                    <div className="border-t border-apple-gray-200 pt-2.5 dark:border-apple-gray-800">
+                      {subsidy > 0 && (
+                        <div className="flex justify-between text-apple-green-700 dark:text-apple-green-400">
+                          <span>{state === "Uttar Pradesh" ? "UP combined subsidy" : "PM Surya Ghar subsidy"}</span>
+                          <span>−{formatINR(subsidy)}</span>
+                        </div>
+                      )}
+                      <div className="mt-2 flex justify-between text-base font-semibold">
+                        <span>Homeowner net after subsidy</span>
+                        <span>{formatINR(homeownerNet)}</span>
                       </div>
-                    )}
-                    <div className="mt-2 flex justify-between text-base font-semibold">
-                      <span>Homeowner net after subsidy</span>
-                      <span>{formatINR(homeownerNet)}</span>
+                    </div>
+                    <p className="text-right text-[11px] text-muted-foreground">
+                      5% GST and freight included · Installation by dealer
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-5 space-y-3">
+                    <div className="rounded-xl border border-apple-green-200 bg-apple-green-50/70 p-4 dark:border-apple-green-900/40 dark:bg-apple-green-950/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-apple-green-800 dark:text-apple-green-300">
+                          Turnkey Quote
+                        </span>
+                        <Badge variant="outline" className="border-apple-green-300 bg-white text-apple-green-800 dark:bg-apple-gray-900">
+                          All-Inclusive
+                        </Badge>
+                      </div>
+                      <div className="mt-2 space-y-1.5 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Total Turnkey Cost</span>
+                          <span className="font-semibold">{formatINR(turnkeyPrice)}</span>
+                        </div>
+                        {subsidy > 0 && (
+                          <div className="flex justify-between text-apple-green-700 dark:text-apple-green-400">
+                            <span>{state === "Uttar Pradesh" ? "Govt. Subsidy (UP Surya Ghar)" : "Central Subsidy"}</span>
+                            <span>−{formatINR(subsidy)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between border-t border-apple-green-200/80 pt-2 text-base font-bold text-apple-gray-900 dark:border-apple-green-800 dark:text-white">
+                          <span>Net Cost After Subsidy</span>
+                          <span>{formatINR(homeownerNet)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-apple-gray-200 p-3.5 text-xs dark:border-apple-gray-800">
+                      <p className="font-semibold text-apple-gray-900 dark:text-white">
+                        Turnkey Inclusions &amp; Guarantees:
+                      </p>
+                      <ul className="mt-2 space-y-1 text-muted-foreground">
+                        <li className="flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0 text-apple-green-600" />
+                          25-Year Linear Solar Module Output Warranty
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0 text-apple-green-600" />
+                          BIS-Certified Inverter with 5-Year Replacement Warranty
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0 text-apple-green-600" />
+                          Hot-Dip Galvanized Mounting (150 km/h wind rated)
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0 text-apple-green-600" />
+                          Complete DISCOM Net-Metering &amp; Subsidy Liaison
+                        </li>
+                      </ul>
                     </div>
                   </div>
-                  <p className="text-right text-[11px] text-muted-foreground">
-                    5% GST and freight included · Installation by dealer
-                  </p>
-                </div>
+                )}
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-apple-gray-50 p-3 dark:bg-apple-gray-900">
@@ -413,20 +492,60 @@ export default function ProjectBuilderPage() {
                   </div>
                 </div>
 
-                <Button size="lg" className="mt-5 w-full" onClick={addSystem} disabled={!product || added}>
-                  {added ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" /> Added to order
-                    </>
-                  ) : (
-                    <>
-                      Add dealer kit to order <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-                <Button size="lg" variant="outline" className="mt-2 w-full" asChild>
-                  <Link href="/cart">View kit order</Link>
-                </Button>
+                {presentationMode ? (
+                  <div className="mt-5 space-y-2.5">
+                    <SplitPayEscrowDialog
+                      kitTitle={product?.name ?? preset.title}
+                      sizeKw={preset.sizeKw}
+                      state={state}
+                      turnkeyPrice={turnkeyPrice}
+                      dealerPrice={dealerPrice}
+                      dealerMargin={dealerMargin}
+                      subsidy={subsidy}
+                      homeownerNet={homeownerNet}
+                      trigger={
+                        <Button size="lg" className="w-full gap-2 bg-apple-green-600 hover:bg-apple-green-700 text-white">
+                          <ShieldCheck className="h-4 w-4" /> Book with Split-Pay Escrow
+                        </Button>
+                      }
+                    />
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => window.print()}
+                    >
+                      <Printer className="h-4 w-4" /> Print Homeowner Proposal
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-5 space-y-2.5">
+                    <Button size="lg" className="w-full" onClick={addSystem} disabled={!product || added}>
+                      {added ? (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" /> Added to order
+                        </>
+                      ) : (
+                        <>
+                          Add dealer kit to order <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                    <SplitPayEscrowDialog
+                      kitTitle={product?.name ?? preset.title}
+                      sizeKw={preset.sizeKw}
+                      state={state}
+                      turnkeyPrice={turnkeyPrice}
+                      dealerPrice={dealerPrice}
+                      dealerMargin={dealerMargin}
+                      subsidy={subsidy}
+                      homeownerNet={homeownerNet}
+                    />
+                    <Button size="lg" variant="outline" className="w-full" asChild>
+                      <Link href="/cart">View kit order</Link>
+                    </Button>
+                  </div>
+                )}
 
                 <div className="mt-4 space-y-2 text-xs text-muted-foreground">
                   <p className="flex items-start gap-2">

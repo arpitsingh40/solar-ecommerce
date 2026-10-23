@@ -17,11 +17,12 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProductGallery } from "@/components/product/product-gallery"
-import { ProductActions } from "@/components/product/product-actions"
+import { ProductCtoConfigurator } from "@/components/product/product-cto-configurator"
 import { ProductCard } from "@/components/product/product-card"
 import { SpecsTable } from "@/components/product/specs-table"
 import { productBySlug, products, getRelatedProducts } from "@/lib/data/catalog"
 import { formatINR, gstIncluded, INDIA } from "@/lib/india"
+import { getCurrentUser } from "@/lib/auth/server"
 
 export function generateStaticParams() {
   return products.map((product) => ({ slug: product.slug }))
@@ -82,6 +83,9 @@ export default async function ProductDetailPage({
   const { slug } = await params
   const product = productBySlug.get(slug)
   if (!product) notFound()
+
+  const user = await getCurrentUser()
+  const isDealer = Boolean(user)
 
   const price = product.salePrice ?? product.basePrice
   const turnkeyPrice = product.basePrice
@@ -213,74 +217,8 @@ export default async function ProductDetailPage({
             {product.description}
           </p>
 
-          <div className="mt-7 rounded-2xl border border-apple-gray-200 p-5 dark:border-apple-gray-800">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-apple-gray-400">
-              B2B dealer price
-            </p>
-            <div className="mt-1 flex flex-wrap items-end gap-3">
-              <span className="text-3xl font-semibold tracking-tight text-apple-gray-900 dark:text-white">
-                {formatINR(price)}
-              </span>
-              <Badge variant="outline">65% of turnkey</Badge>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Inclusive of 5% GST ({formatINR(gst)} tax) · Freight included
-            </p>
-
-            <div className="mt-4 space-y-2 rounded-xl bg-apple-gray-50 p-4 text-sm dark:bg-apple-gray-900">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-apple-gray-600 dark:text-apple-gray-400">
-                  Homeowner turnkey quote
-                </span>
-                <span className="font-semibold text-apple-gray-900 dark:text-white">
-                  {formatINR(turnkeyPrice)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-apple-gray-600 dark:text-apple-gray-400">
-                  Dealer margin for labour &amp; profit
-                </span>
-                <span className="font-semibold text-apple-green-700 dark:text-apple-green-400">
-                  {formatINR(dealerMargin)}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-apple-gray-600 dark:text-apple-gray-400">
-              <span className="inline-flex items-center gap-1.5">
-                <BadgeIndianRupee className="h-3.5 w-3.5" />
-                GST input credit for registered dealers
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Landmark className="h-3.5 w-3.5" />
-                Dealer finance on request
-              </span>
-            </div>
-
-            {subsidy > 0 && (
-              <div className="mt-4 rounded-xl border border-apple-green-200 bg-apple-green-50 p-4 dark:border-apple-green-900 dark:bg-apple-green-900/20">
-                <p className="flex items-center gap-2 text-sm font-semibold text-apple-green-800 dark:text-apple-green-300">
-                  <Landmark className="h-4 w-4" />
-                  Uttar Pradesh subsidy benchmark: {formatINR(subsidy)}
-                </p>
-                <p className="mt-1 text-sm text-apple-green-800/80 dark:text-apple-green-300/80">
-                  Homeowner net after subsidy:{" "}
-                  <span className="font-semibold">{formatINR(homeownerNet)}</span> on a{" "}
-                  {formatINR(turnkeyPrice)} turnkey quote. The subsidy is paid to the homeowner,
-                  not deducted from your kit invoice.
-                </p>
-                <Link
-                  href="/learn/pm-surya-ghar-subsidy"
-                  className="mt-2 inline-block text-xs font-medium text-apple-blue-600 hover:underline"
-                >
-                  Check the UP subsidy process
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6">
-            <ProductActions product={product} />
+          <div className="mt-7">
+            <ProductCtoConfigurator product={product} initialIsDealer={isDealer} />
           </div>
 
           <ul className="mt-6 space-y-2.5">

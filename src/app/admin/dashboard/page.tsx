@@ -47,7 +47,7 @@ const stats = [
   },
   {
     name: "Average order value",
-    value: "₹10,328",
+    value: "₹1,48,000",
     change: "+4.1%",
     icon: IndianRupee,
     bg: "bg-apple-purple-100 dark:bg-apple-purple-900/30",
@@ -382,7 +382,7 @@ export default function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {[
-          { icon: Package, title: "Catalogue", text: "29 products live · 8 categories", href: "/admin/products" },
+          { icon: Package, title: "Catalogue", text: "10 kit SKUs · 3 families", href: "/admin/products" },
           { icon: Users, title: "Dealers", text: "8,420 registered dealer businesses", href: "/admin/customers" },
           { icon: BarChart3, title: "Analytics", text: "Conversion and state demand", href: "/admin/analytics" },
         ].map((item) => (

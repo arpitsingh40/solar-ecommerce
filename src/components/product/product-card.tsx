@@ -7,10 +7,11 @@ import { formatINR } from "@/lib/india"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { ShoppingCart, Heart, Search } from "lucide-react"
+import { ShoppingCart, Heart, Search, Lock } from "lucide-react"
 import type { Product } from "@/types/product"
 import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
+import { useAuth } from "@/hooks/use-auth"
 
 interface ProductCardProps {
   product: Product
@@ -35,9 +36,13 @@ export function ProductCard({
 }: ProductCardProps) {
   const { addItem } = useCart()
   const { toggleItem, isInWishlist: checkWishlist } = useWishlist()
+  const { user } = useAuth()
+  const isDealer = Boolean(user)
   const wishlisted = isInWishlist || checkWishlist(product.id)
   const dealerPrice = product.salePrice ?? product.basePrice
   const dealerMargin = Math.max(0, product.basePrice - dealerPrice)
+  const subsidyAmount = product.subsidy ?? 0
+  const netHomeownerCost = Math.max(0, product.basePrice - subsidyAmount)
 
   const handleAddToCart = onAddToCart ?? ((item: Product) => addItem(item))
   const handleToggleWishlist = onToggleWishlist ?? ((item: Product) => toggleItem(item))
@@ -63,7 +68,7 @@ export function ProductCard({
               {product.name}
             </p>
             <p className="text-sm font-semibold text-apple-blue-600 dark:text-apple-blue-400">
-              {formatPrice(dealerPrice)}
+              {isDealer ? formatPrice(dealerPrice) : `${formatPrice(product.basePrice)} Turnkey`}
             </p>
           </div>
         </div>
@@ -181,35 +186,83 @@ export function ProductCard({
 
       <CardFooter className="p-4 pt-0">
         <div className="w-full border-t border-apple-gray-100 pt-4 dark:border-apple-gray-800">
-          <div className="flex items-baseline justify-between gap-2">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Dealer kit price
+          {isDealer ? (
+            <>
+              <div className="flex items-baseline justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    Dealer kit price
+                  </p>
+                  <span className="text-lg font-bold text-apple-gray-900 dark:text-white">
+                    {formatPrice(dealerPrice)}
+                  </span>
+                </div>
+                <span className="text-[11px] text-muted-foreground">Incl. GST</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                Homeowner turnkey {formatPrice(product.basePrice)}
+                {dealerMargin > 0 ? ` · Dealer keeps ${formatPrice(dealerMargin)}` : ""}
               </p>
-              <span className="text-lg font-bold text-apple-gray-900 dark:text-white">
-                {formatPrice(dealerPrice)}
-              </span>
-            </div>
-            <span className="text-[11px] text-muted-foreground">Incl. GST</span>
-          </div>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-            Homeowner turnkey {formatPrice(product.basePrice)}
-            {dealerMargin > 0 ? ` · Dealer keeps ${formatPrice(dealerMargin)}` : ""}
-          </p>
 
-          <Button
-            size="sm"
-            className="mt-3 w-full"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              handleAddToCart(product)
-            }}
-            disabled={product.stock === 0}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {product.stock === 0 ? "Out of stock" : "Add kit to order"}
-          </Button>
+              <Button
+                size="sm"
+                className="mt-3 w-full"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleAddToCart(product)
+                }}
+                disabled={product.stock === 0}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {product.stock === 0 ? "Out of stock" : "Add kit to order"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-2">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    Turnkey Installed Price
+                  </p>
+                  <span className="text-lg font-bold text-apple-gray-900 dark:text-white">
+                    {formatPrice(product.basePrice)}
+                  </span>
+                </div>
+                {subsidyAmount > 0 && (
+                  <Badge variant="outline" className="text-[10px] font-normal text-apple-green-700 dark:text-apple-green-400">
+                    UP Subsidy Eligible
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-apple-green-700 dark:text-apple-green-400 font-medium">
+                Est. net after subsidy: {formatPrice(netHomeownerCost)}
+              </p>
+
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  asChild
+                >
+                  <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(`/products/${product.slug}`)}`}>
+                    <Lock className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                    Dealer sign-in
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full text-xs"
+                  asChild
+                >
+                  <Link href={`/products/${product.slug}`}>
+                    View specs
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </CardFooter>
     </Card>

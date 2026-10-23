@@ -23,7 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local env files
+# Local codebase dumps
+solar-codebase.txt
+
 .env
 .env.local
 .env.development.local

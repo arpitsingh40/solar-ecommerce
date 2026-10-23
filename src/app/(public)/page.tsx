@@ -20,6 +20,7 @@ import {
 import { formatINR } from "@/lib/india"
 import { categories, productBySlug } from "@/lib/data/catalog"
 import type { Product } from "@/types/product"
+import { getCurrentUser } from "@/lib/auth/server"
 
 const categoryImages: Record<string, string> = {
   "on-grid": "/images/solar/kits/lk-03.jpg",
@@ -127,7 +128,10 @@ const trustIndicators = [
   { icon: Truck, title: "Freight included", desc: "One coordinated dispatch" },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getCurrentUser()
+  const isDealer = Boolean(user)
+
   return (
     <div className="flex flex-col bg-white dark:bg-apple-gray-950">
       {/* Hero */}
@@ -135,7 +139,7 @@ export default function HomePage() {
         <div className="container-apple pt-16 pb-10 text-center lg:pt-24 lg:pb-14">
           <Badge variant="solar" className="mb-6 inline-flex items-center gap-2">
             <Sun className="h-3 w-3" />
-            Dealer kit pricing · 65% of turnkey
+            {isDealer ? "Dealer Pro Mode · 65% wholesale pricing active" : "PM Surya Ghar Certified Rooftop Solar Kits"}
           </Badge>
           <h1 className="mx-auto max-w-4xl text-display-4xl font-display font-bold tracking-tight text-apple-gray-900 dark:text-white">
             Rooftop solar kits, built for dealers.
@@ -181,21 +185,32 @@ export default function HomePage() {
                 <div className="max-w-lg text-white">
                   <p className="text-sm font-medium text-white/70">Best-selling kit in Lucknow</p>
                   <h2 className="mt-1 text-headline-xl font-display font-semibold">
-                    3 kW on-grid dealer kit
+                    3 kW on-grid solar kit
                   </h2>
                   <p className="mt-2 text-sm text-white/80">
                     Six 545 W modules · 3 kW inverter · structure, cabling and monitoring included
                   </p>
-                  <div className="mt-4 flex flex-wrap items-baseline gap-2">
-                    <span className="text-2xl font-semibold">{formatINR(1_12_000)}</span>
-                    <span className="text-sm text-white/70">dealer kit price</span>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-apple-gray-900">
-                      Dealer keeps {formatINR(60_000)}
-                    </span>
-                  </div>
+                  {isDealer ? (
+                    <div className="mt-4 flex flex-wrap items-baseline gap-2">
+                      <span className="text-2xl font-semibold">{formatINR(1_12_000)}</span>
+                      <span className="text-sm text-white/70">dealer kit price</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-apple-gray-900">
+                        Dealer keeps {formatINR(60_000)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap items-baseline gap-2">
+                      <span className="text-2xl font-semibold">{formatINR(1_72_000)}</span>
+                      <span className="text-sm text-white/70">turnkey quote</span>
+                      <span className="rounded-full bg-apple-green-500 px-3 py-1 text-xs font-semibold text-white">
+                        {formatINR(64_000)} net after UP subsidy
+                      </span>
+                    </div>
+                  )}
                   <p className="mt-1 text-xs text-white/60">
-                    Homeowner turnkey {formatINR(1_72_000)} · about {formatINR(64_000)} net after
-                    ₹1.08 lakh UP subsidy
+                    {isDealer
+                      ? `Homeowner turnkey ${formatINR(1_72_000)} · about ${formatINR(64_000)} net after ₹1.08 lakh UP subsidy`
+                      : "Includes Tier-1 DCR modules, BIS inverter, galvanized structure & installation. Sign in as a dealer for wholesale pricing."}
                   </p>
                 </div>
                 <Button variant="secondary" size="lg" asChild className="w-full sm:w-auto">

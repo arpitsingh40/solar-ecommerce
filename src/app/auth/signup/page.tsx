@@ -10,11 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-
-function safeCallbackUrl(raw: string | null): string {
-  if (raw && raw.startsWith("/") && !raw.startsWith("/auth")) return raw
-  return "/dashboard"
-}
+import { safeCallbackUrl } from "@/lib/auth/redirect"
 
 function SignUpForm() {
   const router = useRouter()

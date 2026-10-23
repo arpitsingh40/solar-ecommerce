@@ -13,6 +13,21 @@ export interface CartTotals {
   total: number
 }
 
+export function validateCoupon(
+  code?: string | null,
+  subtotal: number = 0
+): { code: string; discount: number } | null {
+  if (!code) return null
+  const normalized = code.trim().toUpperCase()
+  if (normalized === "DEALER5K" && subtotal >= 1_00_000) {
+    return { code: "DEALER5K", discount: Math.min(5_000, subtotal) }
+  }
+  if (normalized === "SOLAR2026") {
+    return { code: "SOLAR2026", discount: Math.round(subtotal * 0.05) }
+  }
+  return null
+}
+
 export function calculateCartTotals(items: CartItem[], coupon?: string | null): CartTotals {
   const subtotal = items.reduce((sum, item) => {
     const price =
@@ -25,10 +40,8 @@ export function calculateCartTotals(items: CartItem[], coupon?: string | null): 
     0
   )
 
-  let couponDiscount = 0
-  if (coupon?.toUpperCase() === "DEALER5K" && subtotal >= 1_00_000) {
-    couponDiscount = Math.min(5_000, subtotal)
-  }
+  const couponResult = validateCoupon(coupon, subtotal)
+  const couponDiscount = couponResult ? couponResult.discount : 0
 
   const shipping = shippingFor(subtotal)
   const total = Math.max(0, subtotal - couponDiscount) + shipping

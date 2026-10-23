@@ -498,20 +498,25 @@ function AnalyticsPanel() {
             <CardTitle className="text-headline-md">Demand by state</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {demand.map((item) => (
-              <div key={item.state}>
-                <div className="mb-1.5 flex justify-between text-sm">
-                  <span>{item.state}</span>
-                  <span className="font-medium">{item.share}%</span>
+            {demand.map((item) => {
+              const maxDemandShare = Math.max(...demand.map((d) => d.share)) || 1
+              return (
+                <div key={item.state}>
+                  <div className="mb-1.5 flex justify-between text-sm">
+                    <span>{item.state}</span>
+                    <span className="font-medium">{item.share}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-apple-gray-100 dark:bg-apple-gray-800">
+                    <div
+                      className="h-full rounded-full bg-apple-gray-900 dark:bg-white"
+                      style={{
+                        width: `${Math.min(100, Math.round((item.share / maxDemandShare) * 100))}%`,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-apple-gray-100 dark:bg-apple-gray-800">
-                  <div
-                    className="h-full rounded-full bg-apple-gray-900 dark:bg-white"
-                    style={{ width: `${(item.share / 24) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </CardContent>
         </Card>
 
@@ -534,7 +539,7 @@ function AnalyticsPanel() {
                   <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-apple-gray-100 dark:bg-apple-gray-800">
                     <div
                       className="h-full rounded-full bg-apple-blue-500"
-                      style={{ width: `${item.share * 2.6}%` }}
+                      style={{ width: `${Math.min(100, item.share)}%` }}
                     />
                   </div>
                 </div>
